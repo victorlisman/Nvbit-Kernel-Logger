@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+core/
+tools/instr_count
+tools/instr_count_bb
+tools/instr_count_cuda_graph
+tools/mem_printf2
+tools/mem_trace
+tools/mem_replace
+tools/mov_replace
+tools/opcode_hist
+tools/record_reg_vals
+tools/Makefile
