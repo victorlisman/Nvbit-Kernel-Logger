@@ -1,0 +1,31 @@
+------------- NVBit (NVidia Binary Instrumentation Tool v1.7.4) Loaded --------------
+NVBit core environment variables (mostly for nvbit-devs):
+ACK_CTX_INIT_LIMITATION = 0 - if set, no warning will be printed for nvbit_at_ctx_init()
+            NVDISASM = nvdisasm - override default nvdisasm found in PATH
+            NOBANNER = 0 - if set, does not print this banner
+       NO_EAGER_LOAD = 0 - eager module loading is turned on by NVBit to prevent potential NVBit tool deadlock, turn it off if you want to use the lazy module loading feature
+---------------------------------------------------------------------------------
+[NVBIT] Launch logger initialized.
+[NVBIT] Launching kernel: vecAdd(double*, double*, double*, int)
+         GridDim = (98, 1, 1)
+         BlockDim = (1024, 1, 1)
+         Arg[0] = 0x7ffd56a455f8
+         Arg[1] = 0x7ffd56a455f0
+         Arg[2] = 0x7ffd56a455e8
+         Arg[3] = 0x7ffd56a455e4
+         Arg[4] = 0x76fd6a93c010
+         Arg[5] = 0xca947a849932a200
+         Arg[6] = 0x76fd6ef4a010
+         Arg[7] = 0x5938ea050d75
+         Arg[8] = 0x5938ea051010
+         Arg[9] = 0xc3500
+         Arg[10] = 0x5938ea051010
+         Arg[11] = 0x76fd53800000
+         Arg[12] = 0x76fd538c3600
+         Arg[13] = 0x76fd53a00000
+         Arg[14] = 0x100000400
+         Arg[15] = 0x6200000001
+         Arg[16] = 0x100000001
+         Arg[17] = 0xca947a849932a200
+Final sum = 100000.000000; sum/n = 1.000000 (should be ~1)
+[NVBIT] Tool exiting.
