@@ -64,6 +64,10 @@ static void mem_dumper() {
         cuCtxSetCurrent(job.ctx);
 
         for (size_t i = 0; i < job.dev_ptrs.size(); ++i) {
+            size_t want = job.sizes[i];
+            if (!want) { DBG("arg[%zu] size unknown – skip", i); continue; }
+
+
             unsigned mem_type = 0;
             if (cuPointerGetAttribute(&mem_type,
                    CU_POINTER_ATTRIBUTE_MEMORY_TYPE, job.dev_ptrs[i]) != CUDA_SUCCESS
@@ -105,7 +109,22 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
                                     const char*,
                                     void* params,
                                     CUresult*) {
+    
+    if (!is_exit && (cbid == API_CUDA_cuMemAlloc_v2 || cbid == API_CUDA_cuMemAllocManaged))
+    {
+        auto *pa = (cuMemAlloc_v2_params*)params;
+        alloc_size[*pa->dptr] = pa->bytesize;
+        DBG("alloc 0x%11x %zu", (unsigned long long)pa->dptr, pa->bytesize);
+        return;
+    }
 
+    if (!is_exit && cbid == API_CUDA_cuMemFree_v2) {
+        auto *pf = (cuMemFree_v2_params*)params;
+        alloc_size.erase(pf->dptr);
+        DBG("free 0x%11x", (unsigned long long)pf->dptr);
+        return;
+    }
+        /* ------------ memcpy tracking ---------------------------------- */
     if (is_exit) return;
     if (cbid != API_CUDA_cuLaunchKernel &&
         cbid != API_CUDA_cuLaunchKernel_ptsz) return;
@@ -131,11 +150,16 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
             CUdeviceptr dev_ptr = 0;
             memcpy(&dev_ptr, kparams[i], sizeof(CUdeviceptr));
 
-
-
             if (dev_ptr < 0x700000000000ULL || dev_ptr > 0x7fffffffffffULL) {
                 DBG("  arg[%d] 0x%llx outside GPU range - skip",
                     i, (unsigned long long)dev_ptr);
+                break;
+            }
+
+            CUcontext dummy;
+            if (cuPointerGetAttribute(&dummy,
+                    CU_POINTER_ATTRIBUTE_CONTEXT, dev_ptr) != CUDA_SUCCESS) {
+                DBG("arg[%d] unowned pointer – stop scan", i);
                 break;
             }
 
@@ -147,11 +171,20 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
                     DBG("[DBG] args[%d] looks like host pointer - skipping", i);
                     break;                       // not a device buffer ‑ skip
                 }
+                /* determine size */
+                size_t sz = 0;
+                auto m = memcpy_size.find(dev_ptr);
+                if (m != memcpy_size.end()) sz = m->second;
+                else {
+                    auto a = alloc_size.find(dev_ptr);
+                    if (a != alloc_size.end()) sz = a->second;
+                }
 
-                DBG("[DBG] arg[%d] dev=0x%llx queued", i,
-                    (unsigned long long)dev_ptr);
+                DBG("arg[%d] dev=0x%llx size=%zu queued", i,
+                    (unsigned long long)dev_ptr, sz);
+
             job.dev_ptrs.push_back(dev_ptr);
-            job.sizes.push_back(64);          // unknown size
+            job.sizes.push_back(sz ? sz : 64);       
         }
 
     {
