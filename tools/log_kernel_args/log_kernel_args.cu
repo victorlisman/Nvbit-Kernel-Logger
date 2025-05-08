@@ -113,14 +113,17 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
     if (!is_exit && (cbid == API_CUDA_cuMemAlloc_v2 || cbid == API_CUDA_cuMemAllocManaged))
     {
         auto *pa = (cuMemAlloc_v2_params*)params;
+        CUdeviceptr gpu = *pa->dptr;
+        alloc_size[gpu] = pa->bytesize;
         alloc_size[*pa->dptr] = pa->bytesize;
-        DBG("alloc 0x%11x %zu B", (unsigned long long)(*pa->dptr), pa->bytesize);
+        DBG("alloc 0x%llx %zu B", (unsigned long long)gpu, pa->bytesize);
+        return;
     }
 
-    if (!is_exit && cbid == API_CUDA_cuMemFree_v2) {
+    if (!is_exit && (cbid == API_CUDA_cuMemcpyHtoD_v2 || cbid == API_CUDA_cuMemcpyHtoDAsync_v2)) {
         auto *pm = (cuMemcpyHtoD_v2_params*)params;
         memcpy_size[pm->dstDevice] = pm->ByteCount;
-        DBG("memcpy H→D 0x%11x %zu B", (unsigned long long)(pm->dstDevice), pm->ByteCount);
+        DBG("memcpy H→D 0x%llx %zu B", (unsigned long long)pm->dstDevice, pm->ByteCount);
         return;
     }
         /* ------------ memcpy tracking ---------------------------------- */
