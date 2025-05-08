@@ -35,14 +35,16 @@ OBJ      := log_kernel_args.o
 SO       := log_kernel_args.so
 ARCH    ?= all
 
+DBGFLAG := -DDEBUG=1
+
 # ---------- rules ---------------------------------------------------------
 all: $(SO)
 
 $(SO): $(OBJ) /home/vic/Dev/nvbit-1.7/core/libnvbit.a
-	$(NVCC) -arch=$(ARCH) -DDEBUG=1 -O3 -shared $(OBJ) $(LIBS) $(NVCC_PATH) \
+	$(NVCC) -arch=$(ARCH) $(DBGFLAG) -O3 -shared $(OBJ) $(LIBS) $(NVCC_PATH) \
 	        -lcuda -lcudart_static -lpthread -o $@          # ← added -pthread
 $(OBJ): $(SRC) cuda_v1_shim.h
-	$(NVCC) -dc -c -std=c++17 $(INCLUDES) -Xptxas -cloning=no \
+	$(NVCC) -dc -c -std=c++17 $(DBGFLAG) $(INCLUDES) -Xptxas -cloning=no \
 	        -Xcompiler -Wall -arch=$(ARCH) -O3 -Xcompiler -fPIC $< -o $@
 
 clean:

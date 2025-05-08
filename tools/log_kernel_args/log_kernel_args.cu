@@ -11,6 +11,8 @@
 #include <string>
 #include <chrono>
 #include <condition_variable>
+#include <cstring>
+#include <unordered_map>
 
 #include "nvbit_tool.h"
 #include "nvbit.h"
@@ -36,10 +38,12 @@ static std::mutex                log_mtx;
 static std::condition_variable   cv;
 static std::vector<KernelArgLog> pending;
 static bool                      keep_running = true;
+static std::unordered_map<CUdeviceptr, size_t> alloc_size;
+static std::unordered_map<CUdeviceptr, size_t> memcpy_size;
 
 /* --------------- background thread --------------- */
 static void mem_dumper() {
-    DBG(puts("[DBG] mem_dumper thread started"));
+    DBG("[DBG] mem_dumper thread started");
     while (true) {
         KernelArgLog job;
 
@@ -81,7 +85,7 @@ static void mem_dumper() {
 static std::thread dumper_thread;
 
 extern "C" void nvbit_at_init() {
-    puts("[NVBIT] arg‑logger initialised");
+    puts("[NVBIT] arg-logger initialised");
     dumper_thread = std::thread(mem_dumper);
 }
 
@@ -91,7 +95,7 @@ extern "C" void nvbit_at_term() {
     }
     cv.notify_all();              // wake thread
     dumper_thread.join();         // wait – prevents segfault on exit
-    DBG(puts("[DBG] dumper thread joined"));
+    DBG("[DBG] dumper thread joined");
     puts("[NVBIT] arg‑logger exiting");
 }
 
@@ -106,7 +110,7 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
     if (cbid != API_CUDA_cuLaunchKernel &&
         cbid != API_CUDA_cuLaunchKernel_ptsz) return;
     
-    DBG(printf("[DBG] cuLaunchKernel %p\n"));
+    DBG("[DBG] cuLaunchKernel intercepted");
     auto* p = (cuLaunchKernel_params*)params;
 
     KernelArgLog job;
@@ -115,12 +119,39 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
 
     void** kparams = (void**)p->kernelParams;
     if (kparams)
-        for (int i = 0; i < 32 && kparams[i]; ++i) {
-            CUdeviceptr dev = *reinterpret_cast<CUdeviceptr*>(kparams[i]);
-            DBG("  arg[%d] host‑ptr=%p dev=0x%llx", i, kparams[i],
-                (unsigned long long)dev);
-            job.dev_ptrs.push_back(dev);
-            job.sizes.push_back(64);            // placeholder size
+        for (int i = 0; i < 64 && kparams[i]; ++i) {
+            uintptr_t host_ptr = (uintptr_t)kparams[i];
+
+            if (host_ptr < 0x100000000000ULL)
+            {
+                DBG("[DBG] args[%d] looks like scalar - skipping", i);
+                break;
+            }
+
+            CUdeviceptr dev_ptr = 0;
+            memcpy(&dev_ptr, kparams[i], sizeof(CUdeviceptr));
+
+
+
+            if (dev_ptr < 0x700000000000ULL || dev_ptr > 0x7fffffffffffULL) {
+                DBG("  arg[%d] 0x%llx outside GPU range - skip",
+                    i, (unsigned long long)dev_ptr);
+                break;
+            }
+
+            unsigned mem_type = 0;
+
+            if (cuPointerGetAttribute(&mem_type,
+                   CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dev_ptr) != CUDA_SUCCESS
+                || mem_type != CU_MEMORYTYPE_DEVICE) {
+                    DBG("[DBG] args[%d] looks like host pointer - skipping", i);
+                    break;                       // not a device buffer ‑ skip
+                }
+
+                DBG("[DBG] arg[%d] dev=0x%llx queued", i,
+                    (unsigned long long)dev_ptr);
+            job.dev_ptrs.push_back(dev_ptr);
+            job.sizes.push_back(64);          // unknown size
         }
 
     {
