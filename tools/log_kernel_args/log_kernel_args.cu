@@ -1,8 +1,4 @@
-/******************************************************************************
- * NVBit tool: log kernel arguments + async memory dump (no instrumentation)  *
- * Build with nvcc; requires cuda_v1_shim.h                                   *
- ******************************************************************************/
-#include "cuda_v1_shim.h"        //  ⇦  must come first
+#include "cuda_v1_shim.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <mutex>
@@ -25,7 +21,6 @@
 #define DBG(msg, ...)
 #endif
 
-/* -------------------------------------------------------------------------- */
 struct KernelArgLog {
     CUcontext                    ctx;
     std::string                  kernel_name;
@@ -33,7 +28,6 @@ struct KernelArgLog {
     std::vector<size_t>          sizes;      // supply real sizes if known
 };
 
-/* --------------- globals ---------------- */
 static std::mutex                log_mtx;
 static std::condition_variable   cv;
 static std::vector<KernelArgLog> pending;
@@ -41,13 +35,11 @@ static bool                      keep_running = true;
 static std::unordered_map<CUdeviceptr, size_t> alloc_size;
 static std::unordered_map<CUdeviceptr, size_t> memcpy_size;
 
-/* --------------- background thread --------------- */
 static void mem_dumper() {
     DBG("[DBG] mem_dumper thread started");
     while (true) {
         KernelArgLog job;
 
-        /* wait for work or shutdown */
         {
             std::unique_lock<std::mutex> lk(log_mtx);
             cv.wait(lk, []{ return !pending.empty() || !keep_running; });
@@ -85,7 +77,6 @@ static void mem_dumper() {
     }
 }
 
-/* --------------- NVBit hooks --------------- */
 static std::thread dumper_thread;
 
 extern "C" void nvbit_at_init() {
