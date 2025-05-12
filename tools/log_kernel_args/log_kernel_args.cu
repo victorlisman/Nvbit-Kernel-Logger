@@ -25,7 +25,7 @@ struct KernelArgLog {
     CUcontext                    ctx;
     std::string                  kernel_name;
     std::vector<CUdeviceptr>     dev_ptrs;
-    std::vector<size_t>          sizes;      // supply real sizes if known
+    std::vector<size_t>          sizes;
 };
 
 static std::mutex                log_mtx;
@@ -46,7 +46,7 @@ static void mem_dumper() {
             if (!keep_running && pending.empty()) {
                 DBG("[DBG] mem_dumper thread exiting");
                 return;  
-            }    // graceful exit
+            }  
 
             job = std::move(pending.back());
             pending.pop_back();
@@ -57,14 +57,14 @@ static void mem_dumper() {
 
         for (size_t i = 0; i < job.dev_ptrs.size(); ++i) {
             size_t want = job.sizes[i];
-            if (!want) { DBG("arg[%zu] size unknown – skip", i); continue; }
+            if (!want) { DBG("arg[%zu] size unknown - skip", i); continue; }
 
 
             unsigned mem_type = 0;
             if (cuPointerGetAttribute(&mem_type,
                    CU_POINTER_ATTRIBUTE_MEMORY_TYPE, job.dev_ptrs[i]) != CUDA_SUCCESS
                 || mem_type != CU_MEMORYTYPE_DEVICE)
-                continue;                       // not a device buffer ‑ skip
+                continue;                     
 
             std::vector<uint8_t> h(job.sizes[i]);
             if (cuMemcpyDtoH(h.data(), job.dev_ptrs[i], h.size()) == CUDA_SUCCESS) {
@@ -88,10 +88,10 @@ extern "C" void nvbit_at_term() {
     {   std::lock_guard<std::mutex> lk(log_mtx);
         keep_running = false;
     }
-    cv.notify_all();              // wake thread
-    dumper_thread.join();         // wait – prevents segfault on exit
+    cv.notify_all();             
+    dumper_thread.join();       
     DBG("[DBG] dumper thread joined");
-    puts("[NVBIT] arg‑logger exiting");
+    puts("[NVBIT] arg-logger exiting");
 }
 
 extern "C" void nvbit_at_cuda_event(CUcontext ctx,
@@ -117,7 +117,7 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
         DBG("memcpy H→D 0x%llx %zu B", (unsigned long long)pm->dstDevice, pm->ByteCount);
         return;
     }
-        /* ------------ memcpy tracking ---------------------------------- */
+
     if (is_exit) return;
     if (cbid != API_CUDA_cuLaunchKernel &&
         cbid != API_CUDA_cuLaunchKernel_ptsz) return;
@@ -162,9 +162,9 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
                    CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dev_ptr) != CUDA_SUCCESS
                 || mem_type != CU_MEMORYTYPE_DEVICE) {
                     DBG("[DBG] args[%d] looks like host pointer - skipping", i);
-                    break;                       // not a device buffer ‑ skip
+                    break;                      
                 }
-                /* determine size */
+           
                 size_t sz = 0;
                 auto m = memcpy_size.find(dev_ptr);
                 if (m != memcpy_size.end()) sz = m->second;
@@ -184,6 +184,6 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
         std::lock_guard<std::mutex> lk(log_mtx);
         pending.emplace_back(std::move(job));
     }
-    cv.notify_one();                // wake dumper thread
+    cv.notify_one();               
     DBG("queued");
 }
