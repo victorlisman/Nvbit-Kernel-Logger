@@ -9,6 +9,10 @@
 #include <condition_variable>
 #include <cstring>
 #include <unordered_map>
+#include <fstream>
+#include <sstream>
+#include <unistd.h>
+#include <iomanip>
 
 #include "nvbit_tool.h"
 #include "nvbit.h"
@@ -34,6 +38,32 @@ static std::vector<KernelArgLog> pending;
 static bool                      keep_running = true;
 static std::unordered_map<CUdeviceptr, size_t> alloc_size;
 static std::unordered_map<CUdeviceptr, size_t> memcpy_size;
+
+static std::string dump_sass_to_tmp(const std::vector<Instr*>& instrs, const std::string& kernel) {
+    std::ostringstream fname;
+    fname << "/home/vic/Dev/sass_ptx_parser/tmp/" << kernel << "-" << getpid() << ".sass";
+    {std::ofstream out(fname.str(), std::ios::out | std::ios::trunc);
+    for (Instr* i : instrs) {
+        out << i->getSass() << '\n';
+    }}
+    return fname.str();
+}
+
+static void launch_analyser(const std::string& sass_path,
+                            int grid, int block, CUdeviceptr base)
+{
+    std::ostringstream cmd;
+    cmd << "python3 /home/vic/Dev/sass_ptx_parser/ptx_parser/main.py "
+        << std::quoted(sass_path) << ' '
+        << "--grid "  << grid << ' '
+        << "--block " << block << ' '
+        << "--base 0x" << std::hex << base << ' '
+        << "--json_out " << std::quoted(sass_path) << ".json"
+        << " &";                    // run detached
+    
+    std::cout << "[DBG] Dumping sass to" << sass_path;
+    std::system(cmd.str().c_str());
+}
 
 static void mem_dumper() {
     DBG("[DBG] mem_dumper thread started");
@@ -129,6 +159,25 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
     job.ctx         = ctx;
     job.kernel_name = nvbit_get_func_name(ctx, p->f);
 
+    // get sass from kenrel
+    const std::vector<Instr*>& instrs = nvbit_get_instrs(ctx, p->f);
+    for (Instr* i : instrs) {
+        std::cout << "[" << i->getIdx() << "] "
+                  << "Offset: " << i->getOffset() << "\t"
+                  << i->getSass() << "\n";
+    }
+
+    std::string sass_file = dump_sass_to_tmp(instrs, job.kernel_name);
+
+    CUdeviceptr base = 0;
+    if (!job.dev_ptrs.empty()) {
+        base = job.dev_ptrs[0];
+    }
+
+    launch_analyser(sass_file, p->gridDimX * p->blockDimX,
+                     p->blockDimX, base);
+    DBG("sass dumped to %s", sass_file.c_str());
+
     void** kparams = (void**)p->kernelParams;
     if (kparams)
         for (int i = 0; i < 64 && kparams[i]; ++i) {
@@ -137,7 +186,8 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
             if (host_ptr < 0x100000000000ULL)
             {
                 DBG("[DBG] args[%d] looks like scalar - skipping", i);
-                break;
+                //break;
+                continue;
             }
 
             CUdeviceptr dev_ptr = 0;
@@ -146,14 +196,16 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
             if (dev_ptr < 0x700000000000ULL || dev_ptr > 0x7fffffffffffULL) {
                 DBG("  arg[%d] 0x%llx outside GPU range - skip",
                     i, (unsigned long long)dev_ptr);
-                break;
+                //break;
+                continue;
             }
 
             CUcontext dummy;
             if (cuPointerGetAttribute(&dummy,
                     CU_POINTER_ATTRIBUTE_CONTEXT, dev_ptr) != CUDA_SUCCESS) {
-                DBG("arg[%d] unowned pointer – stop scan", i);
-                break;
+                DBG("arg[%d] unowned pointer - stop scan", i);
+                //break;
+                continue;
             }
 
             unsigned mem_type = 0;
@@ -162,7 +214,8 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
                    CU_POINTER_ATTRIBUTE_MEMORY_TYPE, dev_ptr) != CUDA_SUCCESS
                 || mem_type != CU_MEMORYTYPE_DEVICE) {
                     DBG("[DBG] args[%d] looks like host pointer - skipping", i);
-                    break;                      
+                    //break;
+                    continue;                      
                 }
            
                 size_t sz = 0;
