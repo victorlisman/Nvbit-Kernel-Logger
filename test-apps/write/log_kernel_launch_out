@@ -1,0 +1,27 @@
+------------- NVBit (NVidia Binary Instrumentation Tool v1.7.4) Loaded --------------
+NVBit core environment variables (mostly for nvbit-devs):
+ACK_CTX_INIT_LIMITATION = 0 - if set, no warning will be printed for nvbit_at_ctx_init()
+            NVDISASM = nvdisasm - override default nvdisasm found in PATH
+            NOBANNER = 0 - if set, does not print this banner
+       NO_EAGER_LOAD = 0 - eager module loading is turned on by NVBit to prevent potential NVBit tool deadlock, turn it off if you want to use the lazy module loading feature
+---------------------------------------------------------------------------------
+Intercepted kernel launch: write(float*)
+  gridDim = (4, 1, 1)
+  blockDim = (128, 1, 1)
+Decoded arguments for kernel: write(float*)
+  [output] Arg 0 (float*): 0x7598bb800000, [0] = 0
+  Output pointer: 0x7598bb800000
+SASS dumped to: /home/vic/Dev/sass_ptx_parser/tmp/write(float*)-18100.sass
+[DBG] Dumping sass to/home/vic/Dev/sass_ptx_parser/tmp/write(float*)-18100.sassFirst 10 values after write kernel:
+h_out[0] = 1written to0x7598bb800000
+h_out[1] = 1written to0x7598bb800004
+h_out[2] = 1written to0x7598bb800008
+h_out[3] = 1written to0x7598bb80000c
+h_out[4] = 1written to0x7598bb800010
+h_out[5] = 1written to0x7598bb800014
+h_out[6] = 1written to0x7598bb800018
+h_out[7] = 1written to0x7598bb80001c
+h_out[8] = 1written to0x7598bb800020
+h_out[9] = 1written to0x7598bb800024
+DEBUG: Address[0]: 0x{addresses[0]:x}
+Output written to /home/vic/Dev/sass_ptx_parser/tmp/write(float*)-18100.sass.json

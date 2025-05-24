@@ -22,7 +22,8 @@ int main() {
 
     std::cout << "First 10 values after write kernel:\n";
     for (int i = 0; i < 10; ++i) {
-        std::cout << "h_out[" << i << "] = " << h_out[i] << "\n";
+        void *write_addr = static_cast<void*>(d_out + i);
+        std::cout << "h_out[" << i << "] = " << h_out[i] << "written to" << write_addr << "\n";
     }
 
     delete[] h_out;
