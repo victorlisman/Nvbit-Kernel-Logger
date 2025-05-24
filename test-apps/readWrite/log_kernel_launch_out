@@ -1,0 +1,19 @@
+------------- NVBit (NVidia Binary Instrumentation Tool v1.7.4) Loaded --------------
+NVBit core environment variables (mostly for nvbit-devs):
+ACK_CTX_INIT_LIMITATION = 0 - if set, no warning will be printed for nvbit_at_ctx_init()
+            NVDISASM = nvdisasm - override default nvdisasm found in PATH
+            NOBANNER = 0 - if set, does not print this banner
+       NO_EAGER_LOAD = 0 - eager module loading is turned on by NVBit to prevent potential NVBit tool deadlock, turn it off if you want to use the lazy module loading feature
+---------------------------------------------------------------------------------
+blockDim: (256, 1, 1), gridDim: (4, 1, 1)
+Intercepted kernel launch: readWriteKernel(float*, float*)
+  gridDim = (4, 1, 1)
+  blockDim = (256, 1, 1)
+Decoded arguments for kernel: readWriteKernel(float*, float*)
+  [input] Arg 0 (float*): 0x76e69f801000, [0] = 0
+  [output] Arg 1 (float*): 0x76e69f800000, [0] = 0
+  Output pointer: 0x76e69f800000
+SASS dumped to: /home/vic/Dev/sass_ptx_parser/tmp/readWriteKernel(float*, float*)-18479.sass
+[DBG] Dumping sass to/home/vic/Dev/sass_ptx_parser/tmp/readWriteKernel(float*, float*)-18479.sassSuccess: all values match!
+DEBUG: Address[0]: 0x{addresses[0]:x}
+Output written to /home/vic/Dev/sass_ptx_parser/tmp/readWriteKernel(float*, float*)-18479.sass.json

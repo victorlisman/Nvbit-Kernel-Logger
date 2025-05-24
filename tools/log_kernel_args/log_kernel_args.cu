@@ -159,12 +159,12 @@ static void mem_dumper() {
                 puts("");
             }
         }
-        if (!job.sass_file.empty()) {
-            CUdeviceptr base = job.dev_ptrs.empty() ? 0 : job.dev_ptrs.front();
-            launch_analyser(job.sass_file, job.grid_x,
-                             job.block_x, base);
-            DBG("sass dumped to %s", job.sass_file.c_str());
-        }
+        //if (!job.sass_file.empty()) {
+        //    CUdeviceptr base = job.dev_ptrs.empty() ? 0 : job.dev_ptrs.front();
+        //    launch_analyser(job.sass_file, job.grid_x,
+        //                     job.block_x, base);
+        //    DBG("sass dumped to %s", job.sass_file.c_str());
+        //}
 
 
     }
@@ -175,17 +175,17 @@ static std::thread dumper_thread;
 extern "C" void nvbit_at_init() {
     //signal(SIGSEGV, segv_handler);
     puts("[NVBIT] arg-logger initialised");
-    dumper_thread = std::thread(mem_dumper);
+   // dumper_thread = std::thread(mem_dumper);
 }
 
 extern "C" void nvbit_at_term() {
-    {   std::lock_guard<std::mutex> lk(log_mtx);
-        keep_running = false;
-    }
-    cv.notify_all();             
-    dumper_thread.join();       
-    DBG("[DBG] dumper thread joined");
-    puts("[NVBIT] arg-logger exiting");
+    //{   std::lock_guard<std::mutex> lk(log_mtx);
+    //    keep_running = false;
+    //}
+    //cv.notify_all();             
+    //dumper_thread.join();       
+    //DBG("[DBG] dumper thread joined");
+    //puts("[NVBIT] arg-logger exiting");
 }
 
 extern "C" void nvbit_at_cuda_event(CUcontext ctx,
@@ -205,7 +205,7 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
     //    return;
     //}
 
-    if (is_exit &&                       // <-- change   !is_exit  → is_exit
+    if (is_exit &&                       
         (cbid == API_CUDA_cuMemAlloc_v2 || cbid == API_CUDA_cuMemAllocManaged)) {
         auto *pa = (cuMemAlloc_v2_params*)params;
         CUdeviceptr gpu = *pa->dptr;
@@ -235,8 +235,7 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
     KernelArgLog job;
     job.ctx         = ctx;
     job.kernel_name = nvbit_get_func_name(ctx, p->f);
-
-    // get sass from kenrel
+    //get sass from kenrel
     const std::vector<Instr*>& instrs = nvbit_get_instrs(ctx, p->f);
     for (Instr* i : instrs) {
         std::cout << "[" << i->getIdx() << "] "
@@ -244,7 +243,7 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
                   << i->getSass() << "\n";
     
     }
-    std::string sass_file = dump_sass_to_tmp(instrs, job.kernel_name);
+    std::string sass_file = dump_sass_to_tmp(instrs, nvbit_get_func_name(ctx, p->f));
 
     
 
@@ -312,23 +311,26 @@ extern "C" void nvbit_at_cuda_event(CUcontext ctx,
 
                 DBG("arg[%d] dev=0x%llx size=%zu queued", i,
                     (unsigned long long)dev_ptr, sz);
-
-            job.dev_ptrs.push_back(dev_ptr);
-            job.sizes.push_back(sz);       
+            //temporary evalutation
+            //launch_analyser(sass_file, p->gridDimX,
+            //                 p->blockDimX, dev_ptr);
+            //job.dev_ptrs.push_back(dev_ptr);
+            //job.sizes.push_back(sz);       
         }
     //CUdeviceptr base = job.dev_ptrs.empty() ? 0 : job.dev_ptrs[0];
     //launch_analyser(sass_file, p->gridDimX,
     //                 p->blockDimX, base);
     //DBG("sass dumped to %s", sass_file.c_str());
-    job.sass_file = sass_file;
-    job.grid_x    = p->gridDimX;
-    job.block_x   = p->blockDimX;
+    //job.sass_file = sass_file;
+    //job.grid_x    = p->gridDimX;
+    //job.block_x   = p->blockDimX;
 
 
-    {
-        std::lock_guard<std::mutex> lk(log_mtx);
-        pending.push_back(job);
-    }
-    cv.notify_one();               
-    DBG("queued");
+    //{
+        
+     //   std::lock_guard<std::mutex> lk(log_mtx);
+     //   pending.push_back(job);
+    //}
+    //cv.notify_one();               
+    //DBG("queued");
 }

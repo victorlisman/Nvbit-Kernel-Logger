@@ -8,9 +8,11 @@ __global__ void readWriteKernel(float* x, float* y) {
 }
 
 int main() {
+    float* d_y;
     int N = 1024;
     size_t size = N * sizeof(float);
 
+    cudaMalloc(&d_y, size);
     // Allocate host memory
     float* h_x = new float[N];
     float* h_y = new float[N];
@@ -22,9 +24,7 @@ int main() {
 
     // Allocate device memory
     float* d_x;
-    float* d_y;
     cudaMalloc(&d_x, size);
-    cudaMalloc(&d_y, size);
 
     // Copy data from host to device
     cudaMemcpy(d_x, h_x, size, cudaMemcpyHostToDevice);
@@ -32,6 +32,9 @@ int main() {
     // Kernel launch configuration
     dim3 blockDim(256);
     dim3 gridDim((N + blockDim.x - 1) / blockDim.x);  // Ceiling division
+    printf("blockDim: (%d, %d, %d), gridDim: (%d, %d, %d)\n",
+           blockDim.x, blockDim.y, blockDim.z,
+           gridDim.x, gridDim.y, gridDim.z);
 
     // Launch the kernel
     readWriteKernel<<<gridDim, blockDim>>>(d_x, d_y);
@@ -42,8 +45,10 @@ int main() {
     // Validate result
     bool correct = true;
     for (int i = 0; i < N; ++i) {
+        void *write_addr = static_cast<void*>(d_y + i);
+        //std::cout << "h_y[" << i << "] = " << h_y[i] << " written to " << write_addr << std::endl;
         if (h_y[i] != h_x[i]) {
-            std::cout << "Mismatch at index " << i << ": " << h_y[i] << " != " << h_x[i] << std::endl;
+            //std::cout << "Mismatch at index " << i << ": " << h_y[i] << " != " << h_x[i] << std::endl;
             correct = false;
             break;
         }
