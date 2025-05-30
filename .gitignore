@@ -30,7 +30,9 @@
 *.exe
 *.out
 *.app
+*.elf
 
+# Nvbit files
 core/
 tools/instr_count
 tools/instr_count_bb
@@ -42,4 +44,7 @@ tools/mov_replace
 tools/opcode_hist
 tools/record_reg_vals
 tools/Makefile
+
+# Build directories
 .vscode
+.venv

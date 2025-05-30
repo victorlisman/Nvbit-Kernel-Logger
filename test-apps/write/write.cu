@@ -1,12 +1,14 @@
 #include <cuda_runtime.h>
 #include <iostream>
 
-__global__ void write(float *out) {
+__global__ void write(float *out) 
+{
     int global_idx = blockIdx.x * blockDim.x + threadIdx.x;
     out[global_idx] = 1.0f;
 }
 
-int main() {
+int main() 
+{
     const int threads_per_block = 128;
     const int num_blocks = 4;
     const int total_threads = threads_per_block * num_blocks;
@@ -21,7 +23,9 @@ int main() {
     cudaMemcpy(h_out, d_out, size, cudaMemcpyDeviceToHost);
 
     std::cout << "First 10 values after write kernel:\n";
-    for (int i = 0; i < 10; ++i) {
+
+    for (int i = 0; i < 10; ++i) 
+    {
         void *write_addr = static_cast<void*>(d_out + i);
         std::cout << "h_out[" << i << "] = " << h_out[i] << "written to" << write_addr << "\n";
     }
