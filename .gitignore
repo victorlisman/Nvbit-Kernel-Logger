@@ -43,9 +43,3 @@ tools/opcode_hist
 tools/record_reg_vals
 tools/Makefile
 .vscode
-
-#binaries
-int_one_hot
-readWrite
-vectoradd
-write
