@@ -31,6 +31,7 @@ std::vector<ArgInfo> parse_signature(const std::string sig)
         types.push_back(token);
 
     int non_ptr_count = 0;
+
     for (const auto& type : types) 
     {
         std::string trimmed_type = type;
@@ -62,9 +63,13 @@ std::vector<ArgInfo> parse_signature(const std::string sig)
             else if (types.size() > 1) 
             {
                 if (i == types.size() - 1 - non_ptr_count)
+                {
                     io = "output";
+                }
                 else
+                {
                     io = "input";
+                }    
             }
         }
 
