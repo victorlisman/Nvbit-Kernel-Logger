@@ -107,6 +107,11 @@ void decode_kernel_args(const std::string& signature, void** args) {
                 std::cout << "  [" << info.io << "] Arg " << i << " (float*): " << dev_ptr << " (unreadable)\n";
             }
         }
+        else if (type == "short") {
+            short val = 0;
+            cudaMemcpy(&val, args[i], sizeof(short), cudaMemcpyHostToHost);
+            std::cout << "  [" << info.io << "] Arg " << i << " (short): " << val << "\n";
+        }
         else {
             void* ptr = nullptr;
             cudaMemcpy(&ptr, args[i], sizeof(void*), cudaMemcpyHostToHost);
