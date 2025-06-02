@@ -152,7 +152,7 @@ static void launch_analyser(const std::string& sass_path, int grid, int block, C
 {
     std::ostringstream cmd;
 
-    cmd << "python3 /home/vic/Dev/sass_ptx_parser/ptx_parser/main.py "
+    cmd << "python3 /home/vic/Dev/sass_ptx_parser/sass_ptx_parser/main.py "
         << std::quoted(sass_path) << ' '
         << "--grid "  << grid << ' '
         << "--block " << block << ' '
