@@ -96,6 +96,21 @@ void decode_kernel_args(const std::string& signature, void** args)
             cudaMemcpy(&val, args[i], sizeof(int), cudaMemcpyHostToHost);
             std::cout << "  [" << info.io << "] Arg " << i << " (int): " << val << "\n";
         }
+        else if (type == "int*") 
+        {
+            int* dev_ptr = nullptr;
+            cudaMemcpy(&dev_ptr, args[i], sizeof(int*), cudaMemcpyHostToHost);
+
+            int sample = 0;
+            if (cudaMemcpy(&sample, dev_ptr, sizeof(int), cudaMemcpyDeviceToHost) == cudaSuccess) 
+            {
+                std::cout << "  [" << info.io << "] Arg " << i << " (int*): " << dev_ptr << ", [0] = " << sample << "\n";
+            } 
+            else 
+            {
+                std::cout << "  [" << info.io << "] Arg " << i << " (int*): " << dev_ptr << " (unreadable)\n";
+            }
+        }
         else if (type == "float") 
         {
             float val = 0.0f;
@@ -115,6 +130,21 @@ void decode_kernel_args(const std::string& signature, void** args)
             else 
             {
                 std::cout << "  [" << info.io << "] Arg " << i << " (float*): " << dev_ptr << " (unreadable)\n";
+            }
+        }
+        else if (type == "short*")
+        {
+            short* dev_ptr = nullptr;
+            cudaMemcpy(&dev_ptr, args[i], sizeof(short*), cudaMemcpyHostToHost);
+
+            short sample = 0;
+            if (cudaMemcpy(&sample, dev_ptr, sizeof(short), cudaMemcpyDeviceToHost) == cudaSuccess) 
+            {
+                std::cout << "  [" << info.io << "] Arg " << i << " (short*): " << dev_ptr << ", [0] = " << sample << "\n";
+            } 
+            else 
+            {
+                std::cout << "  [" << info.io << "] Arg " << i << " (short*): " << dev_ptr << " (unreadable)\n";
             }
         }
         else if (type == "short") 

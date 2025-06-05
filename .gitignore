@@ -48,4 +48,4 @@ tools/Makefile
 # Build directories
 .vscode
 .venv
-tmp
+tmp*

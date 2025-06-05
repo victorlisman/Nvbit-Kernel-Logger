@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 
-__global__ void one_hot_encode_kernel(const short* input, int* output, int N, int num_classes) {
+__global__ void one_hot_encode_kernel(short* input, int* output, int N, int num_classes) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < N) {
         int class_idx = input[idx];
@@ -12,7 +12,7 @@ __global__ void one_hot_encode_kernel(const short* input, int* output, int N, in
     }
 }
 
-void one_hot_encode(const short* h_input, int* h_output, int N, int num_classes) {
+void one_hot_encode(short* h_input, int* h_output, int N, int num_classes) {
     short* d_input;
     int* d_output;
 
