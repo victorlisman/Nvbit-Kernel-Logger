@@ -1,0 +1,6 @@
+test_arg_detection: test_arg_detection.cpp readWrite.elf
+	g++ -std=c++17 -lgtest -lgtest_main -pthread -o test_arg_detection test_arg_detection.cpp
+	./test_arg_detection
+
+clean:
+	rm -f test_arg_detection nvbit_output.txt

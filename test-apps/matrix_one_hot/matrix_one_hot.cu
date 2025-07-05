@@ -2,19 +2,19 @@
 #include <stdio.h>
 #include <iostream>
 
-__global__ void one_hot_encode_kernel(short* input, int* output, int N, int num_classes) {
+__global__ void one_hot_encode_kernel(short* input, float* output, int N, int num_classes) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < N) {
         int class_idx = input[idx];
         if (class_idx >= 0 && class_idx < num_classes) {
-            output[idx * num_classes + class_idx] = 1;
+            output[idx * num_classes + class_idx] = 1.0;
         }
     }
 }
 
-void one_hot_encode(short* h_input, int* h_output, int N, int num_classes) {
+void one_hot_encode(short* h_input, float* h_output, int N, int num_classes) {
     short* d_input;
-    int* d_output;
+    float* d_output;
 
     size_t input_size = N * sizeof(short);
     size_t output_size = N * num_classes * sizeof(int);
@@ -24,7 +24,7 @@ void one_hot_encode(short* h_input, int* h_output, int N, int num_classes) {
     cudaMemcpy(d_input, h_input, input_size, cudaMemcpyHostToDevice);
     cudaMemset(d_output, 0, output_size);
 
-    int threads_per_block = 256;
+    int threads_per_block = 5;
     int num_blocks = (N + threads_per_block - 1) / threads_per_block;
 
     one_hot_encode_kernel<<<num_blocks, threads_per_block>>>(d_input, d_output, N, num_classes);
@@ -38,7 +38,7 @@ int main() {
     const int N = 5;
     const int num_classes = 4;
     short h_input[N] = {0, 2, 1, 3, 0};
-    int h_output[N * num_classes] = {0};
+    float h_output[N * num_classes] = {0.0};
 
     one_hot_encode(h_input, h_output, N, num_classes);
 

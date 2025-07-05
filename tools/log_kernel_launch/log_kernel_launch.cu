@@ -153,6 +153,33 @@ void decode_kernel_args(const std::string& signature, void** args)
             cudaMemcpy(&val, args[i], sizeof(short), cudaMemcpyHostToHost);
             std::cout << "  [" << info.io << "] Arg " << i << " (short): " << val << "\n";
         }
+        else if (type == "bool")
+        {
+            bool val = false;
+            cudaMemcpy(&val, args[i], sizeof(bool), cudaMemcpyHostToHost);
+            std::cout << "  [" << info.io << "] Arg " << i << " (bool): " << (val ? "true" : "false") << "\n";
+        }
+        else if (type == "bool*") 
+        {
+            bool* dev_ptr = nullptr;
+            cudaMemcpy(&dev_ptr, args[i], sizeof(bool*), cudaMemcpyHostToHost);
+
+            bool sample = false;
+            if (cudaMemcpy(&sample, dev_ptr, sizeof(bool), cudaMemcpyDeviceToHost) == cudaSuccess) 
+            {
+                std::cout << "  [" << info.io << "] Arg " << i << " (bool*): " << dev_ptr << ", [0] = " << (sample ? "true" : "false") << "\n";
+            } 
+            else 
+            {
+                std::cout << "  [" << info.io << "] Arg " << i << " (bool*): " << dev_ptr << " (unreadable)\n";
+            }
+        }
+        else if (type == "void*") 
+        {
+            void* ptr = nullptr;
+            cudaMemcpy(&ptr, args[i], sizeof(void*), cudaMemcpyHostToHost);
+            std::cout << "  [" << info.io << "] Arg " << i << " (void*): " << ptr << "\n";
+        }
         else 
         {
             void* ptr = nullptr;
