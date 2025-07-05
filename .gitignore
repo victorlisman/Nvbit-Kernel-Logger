@@ -49,3 +49,4 @@ tools/Makefile
 .vscode
 .venv
 tmp*
+*.txt
