@@ -256,13 +256,13 @@ void nvbit_at_cuda_event(CUcontext ctx, int is_exit, nvbit_api_cuda_t cbid, cons
         printf("  Output pointer: 0x%lx\n", (unsigned long)output_ptr);
 
         std::vector<Instr*> instrs = nvbit_get_instrs(ctx, launch_params->function);
-        std::string sass_path = dump_sass_to_tmp(instrs, func_name);
-        std::cout << "SASS dumped to: " << sass_path << '\n';
-        
-        launch_analyser(sass_path, 
-                        launch_params->gridDimX * launch_params->gridDimY * launch_params->gridDimZ,
-                        launch_params->blockDimX * launch_params->blockDimY * launch_params->blockDimZ,
-                        output_ptr);
+        //std::string sass_path = dump_sass_to_tmp(instrs, func_name);
+        //std::cout << "SASS dumped to: " << sass_path << '\n';
+        //
+        //launch_analyser(sass_path, 
+        //                launch_params->gridDimX * launch_params->gridDimY * launch_params->gridDimZ,
+        //                launch_params->blockDimX * launch_params->blockDimY * launch_params->blockDimZ,
+        //                output_ptr);
 
     }
 }

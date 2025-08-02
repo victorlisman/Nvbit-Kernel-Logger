@@ -50,3 +50,15 @@ tools/Makefile
 .venv
 tmp*
 *.txt
+*.json
+*/sass_code
+sass_parser/official_samples
+sass_parser/official_samples_results
+
+#python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
